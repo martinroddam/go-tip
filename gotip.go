@@ -21,7 +21,7 @@ var c = cache.New(0, 0) // no expiry
 func init() {
 
 	var config Config
-	filename := "paths.yaml"
+	filename := "./paths.yaml"
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Println(err)
