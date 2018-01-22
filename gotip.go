@@ -39,6 +39,8 @@ func init() {
 	prNumber := initMostRecentlyMergedPR(config.RepoURL)
 	c.Set("current_pr", prNumber, cache.DefaultExpiration)
 	c.Set(prNumber, "", cache.DefaultExpiration)
+	mostRecentPR := getMostRecentlyMergedPR()
+	fmt.Println(mostRecentPR)
 
 }
 
@@ -87,7 +89,9 @@ func initMostRecentlyMergedPR(repoUrl string) string {
 	// get this from GitHub
 
 	// return a string of the PR ID only and store this in a key value pair as key: {PR_ID}, value: nil
-	return "179"
+	prNumber := "179"
+	fmt.Printf("Pull request number: [%s]\n", prNumber)
+	return prNumber
 }
 
 func getMostRecentlyMergedPR() string {
