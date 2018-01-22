@@ -10,7 +10,11 @@ import (
 )
 
 type Config struct {
-	RepoURL  string `yaml:"RepoURL"`
+	RepoURL string `yaml:"RepoURL"`
+	Paths   []Path `yaml:"Paths"`
+}
+
+type Path struct {
 	PathName string `yaml:"PathName"`
 	PathDesc string `yaml:"PathDesc"`
 }
