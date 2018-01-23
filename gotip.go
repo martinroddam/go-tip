@@ -39,14 +39,15 @@ func init() {
 // Verify a path in your application. Must match the PathName as defined in paths.yaml
 func Verify(pathName string) {
 	// do something
+	lastMergedPR := getMostRecentlyMergedPR()
 	isValidPath(pathName)
-	if isPullRequestAlreadyVerified() {
+	if isPullRequestAlreadyVerified(lastMergedPR) {
 		return
 	}
-	if isPathVerfiedForThisPullRequest(pathName) {
+	if isPathVerfiedForThisPullRequest(pathName, lastMergedPR) {
 		return
 	}
-
+	markPathVerified(pathName, lastMergedPR)
 }
 
 func isValidPath(pathNameToValidate string) bool {
@@ -69,9 +70,7 @@ func getPathsToBeVerified() ([]Path, error) {
 	return paths, nil
 }
 
-func isPullRequestAlreadyVerified() bool {
-
-	mostRecentPullRequestNumber := getMostRecentlyMergedPR()
+func isPullRequestAlreadyVerified(mostRecentPullRequestNumber string) bool {
 	verifiedTimestamp, found := c.Get("PR-" + mostRecentPullRequestNumber)
 	if found {
 		if strings.Compare(verifiedTimestamp.(string), "") == 0 {
@@ -98,8 +97,7 @@ func getPathsAlreadyVerifiedForThisPullRequest(prNumber string) []string {
 	return paths
 }
 
-func isPathVerfiedForThisPullRequest(pathToBeVerified string) bool {
-	lastMergedPR := getMostRecentlyMergedPR()
+func isPathVerfiedForThisPullRequest(pathToBeVerified string, lastMergedPR string) bool {
 	pr, found := c.Get(pathToBeVerified)
 	if found {
 		if strings.Compare(pr.(string), "PR-"+lastMergedPR) == 0 {
@@ -109,6 +107,7 @@ func isPathVerfiedForThisPullRequest(pathToBeVerified string) bool {
 		fmt.Printf("Path [%s] has not yet been verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
 		return false
 	}
+	fmt.Printf("Path [%s] has not yet been verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
 	return false
 }
 
@@ -133,6 +132,11 @@ func getMostRecentlyMergedPR() string {
 		return pr.(string)
 	}
 	return "" // if we can't find it, we should log out but not panic
+}
+
+func markPathVerified(pathName string, prNumber string) {
+	c.Set(pathName, "PR-"+prNumber, cache.DefaultExpiration)
+	fmt.Printf("Path [%s] marked verified for PR# [%s]\n", pathName, prNumber)
 }
 
 func markPullRequestVerified(prNumber string) {
