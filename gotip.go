@@ -2,6 +2,8 @@ package gotip
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/patrickmn/go-cache"
 )
@@ -20,6 +22,7 @@ type Path struct {
 var c = cache.New(0, 0) // no expiry
 //const githubRoot = "api.github.com"
 //const gitOwner = "utilitywarehouse"
+const layout = "2006-01-02T15:04:05.000Z"
 
 func init() {
 
@@ -27,7 +30,7 @@ func init() {
 
 	prNumber := initMostRecentlyMergedPR(config.RepoURL)
 	c.Set("current_pr", prNumber, cache.DefaultExpiration)
-	c.Set(prNumber, "", cache.DefaultExpiration)
+	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
 	mostRecentPR := getMostRecentlyMergedPR()
 	fmt.Println(mostRecentPR)
 
@@ -37,6 +40,10 @@ func init() {
 func Verify(pathName string) {
 	// do something
 	isValidPath(pathName)
+	if isPullRequestAlreadyVerified() {
+
+	}
+
 }
 
 func isValidPath(pathNameToValidate string) bool {
@@ -70,9 +77,26 @@ func getLastMergedPullRequestNumber(githubProject string) string {
 	return ""
 }
 
-func isPullRequestAlreadyVerified(prNumber string) bool {
-	// look in go-cache for a key matching the PR ID
-	// value nil implies not verified - a verified PR has a time stamp
+func isPullRequestAlreadyVerified() bool {
+
+	mostRecentPullRequestNumber := getMostRecentlyMergedPR()
+	verifiedTimestamp, found := c.Get("PR-" + mostRecentPullRequestNumber)
+	if found {
+		if strings.Compare(verifiedTimestamp.(string), "") == 0 {
+			fmt.Println("Pull request not yet verified.")
+			return false
+		}
+		layout := "2006-01-02T15:04:05.000Z"
+
+		_, err := time.Parse(layout, verifiedTimestamp.(string))
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Printf("Pull request already verified at %s.\n", verifiedTimestamp.(string))
+		return true
+
+	}
 	return false
 }
 
