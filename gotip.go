@@ -41,7 +41,10 @@ func Verify(pathName string) {
 	// do something
 	isValidPath(pathName)
 	if isPullRequestAlreadyVerified() {
-
+		return
+	}
+	if isPathVerfiedForThisPullRequest(pathName) {
+		return
 	}
 
 }
@@ -64,17 +67,6 @@ func isValidPath(pathNameToValidate string) bool {
 func getPathsToBeVerified() ([]Path, error) {
 	paths := getConfig().Paths
 	return paths, nil
-}
-
-func pathExists(path string) bool {
-	// load the paths from the config and check for existence
-	return true
-}
-
-func getLastMergedPullRequestNumber(githubProject string) string {
-	// load the project id from the config yaml
-	// get the PR ID most recently merged
-	return ""
 }
 
 func isPullRequestAlreadyVerified() bool {
@@ -106,8 +98,17 @@ func getPathsAlreadyVerifiedForThisPullRequest(prNumber string) []string {
 	return paths
 }
 
-func isPathVerfiedForThisPullRequest(path string, prNumber string) bool {
-	// is there a key/value pair in go-cache matching this path and PR ID
+func isPathVerfiedForThisPullRequest(pathToBeVerified string) bool {
+	lastMergedPR := getMostRecentlyMergedPR()
+	pr, found := c.Get(pathToBeVerified)
+	if found {
+		if strings.Compare(pr.(string), "PR-"+lastMergedPR) == 0 {
+			fmt.Printf("Path [%s] has been previously verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
+			return true
+		}
+		fmt.Printf("Path [%s] has not yet been verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
+		return false
+	}
 	return false
 }
 
@@ -116,7 +117,7 @@ func areAllPathsVerified(prNumber string) bool {
 	return true
 }
 
-func initMostRecentlyMergedPR(repoUrl string) string {
+func initMostRecentlyMergedPR(repoURL string) string {
 	// get this from GitHub
 	//url = "https://%s/%s/%s/"
 	// return a string of the PR ID only and store this in a key value pair as key: {PR_ID}, value: nil
@@ -132,7 +133,6 @@ func getMostRecentlyMergedPR() string {
 		return pr.(string)
 	}
 	return "" // if we can't find it, we should log out but not panic
-
 }
 
 func markPullRequestVerified(prNumber string) {
