@@ -2,11 +2,8 @@ package gotip
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 
 	"github.com/patrickmn/go-cache"
-	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -21,20 +18,12 @@ type Path struct {
 
 // set up the go-cache defaults
 var c = cache.New(0, 0) // no expiry
+//const githubRoot = "api.github.com"
+//const gitOwner = "utilitywarehouse"
 
 func init() {
 
-	var config Config
-	filename := "./paths.yaml"
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	ymlErr := yaml.Unmarshal(content, &config)
-	if ymlErr != nil {
-		log.Fatalf("error: %v", ymlErr)
-	}
+	var config = getConfig()
 
 	prNumber := initMostRecentlyMergedPR(config.RepoURL)
 	c.Set("current_pr", prNumber, cache.DefaultExpiration)
@@ -44,12 +33,30 @@ func init() {
 
 }
 
-func verify(path string) {
+// Verify a path in your application. Must match the PathName as defined in paths.yaml
+func Verify(pathName string) {
 	// do something
+	isValidPath(pathName)
 }
 
-func getPathsToBeVerified() ([]string, error) {
-	return nil, nil
+func isValidPath(pathNameToValidate string) bool {
+	pathsToBeVerified, err := getPathsToBeVerified()
+	if err != nil {
+		fmt.Println(err)
+	}
+	for i := range pathsToBeVerified {
+		if pathsToBeVerified[i].PathName == pathNameToValidate {
+			fmt.Printf("Path Name [%s] is valid.\n", pathNameToValidate)
+			return true
+		}
+	}
+	fmt.Printf("Path Name [%s] is invalid!\n", pathNameToValidate)
+	return false
+}
+
+func getPathsToBeVerified() ([]Path, error) {
+	paths := getConfig().Paths
+	return paths, nil
 }
 
 func pathExists(path string) bool {
@@ -87,9 +94,9 @@ func areAllPathsVerified(prNumber string) bool {
 
 func initMostRecentlyMergedPR(repoUrl string) string {
 	// get this from GitHub
-
+	//url = "https://%s/%s/%s/"
 	// return a string of the PR ID only and store this in a key value pair as key: {PR_ID}, value: nil
-	prNumber := "179"
+	prNumber := "1"
 	fmt.Printf("Pull request number: [%s]\n", prNumber)
 	return prNumber
 }
