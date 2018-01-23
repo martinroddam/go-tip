@@ -10,7 +10,7 @@ Import the packahge:
 
 	import "github.com/martinroddam/go-tip"
 
-Add a `paths.yaml` file into the root of your project. See `/example`.
+Add a `paths.yaml` file into the root of your project. See `/examples`.
 
 Add verification points throughout your app as follows:
 

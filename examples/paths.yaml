@@ -6,5 +6,3 @@ Paths:
   - 
     PathName: "User Logged In"
     PathDesc: "A user managed to successfully log in."
-
-RepoURL: "https://github.com/martinroddam/test-gotip"

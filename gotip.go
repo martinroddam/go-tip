@@ -25,15 +25,8 @@ var c = cache.New(0, 0) // no expiry
 const layout = "2006-01-02T15:04:05.000Z"
 
 func init() {
-
 	var config = getConfig()
-
-	prNumber := initMostRecentlyMergedPR(config.RepoURL)
-	c.Set("current_pr", prNumber, cache.DefaultExpiration)
-	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
-	mostRecentPR := getMostRecentlyMergedPR()
-	fmt.Println(mostRecentPR)
-
+	initMostRecentlyMergedPR(config)
 }
 
 // Verify a path in your application. Must match the PathName as defined in paths.yaml
@@ -55,7 +48,7 @@ func Verify(pathName string) {
 
 	if areAllPathsVerifiedForPR(lastMergedPR) {
 		markPullRequestVerified(lastMergedPR)
-		markGitHubPullRequestAsVerified(lastMergedPR)
+		go markGitHubPullRequestAsVerified(lastMergedPR)
 	}
 }
 
@@ -131,13 +124,13 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 	return true
 }
 
-func initMostRecentlyMergedPR(repoURL string) string {
-	// get this from GitHub
-	//url = "https://%s/%s/%s/"
-	// return a string of the PR ID only and store this in a key value pair as key: {PR_ID}, value: nil
+func initMostRecentlyMergedPR(config Config) {
+	// get this from GitHub API - commit id? pr nummber?
+	// hard code for now
 	prNumber := "1"
+	c.Set("current_pr", prNumber, cache.DefaultExpiration)
+	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
 	fmt.Printf("Pull request number: [%s]\n", prNumber)
-	return prNumber
 }
 
 func getMostRecentlyMergedPR() string {
