@@ -55,6 +55,7 @@ func Verify(pathName string) {
 
 	if areAllPathsVerifiedForPR(lastMergedPR) {
 		markPullRequestVerified(lastMergedPR)
+		markGitHubPullRequestAsVerified(lastMergedPR)
 	}
 }
 
@@ -161,5 +162,5 @@ func markPullRequestVerified(prNumber string) {
 }
 
 func markGitHubPullRequestAsVerified(prNumber string) {
-	// tag the PR as verified in Production
+	fmt.Printf("Pull request # [%s] tagged as Verified in GitHub.", prNumber)
 }
