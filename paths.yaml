@@ -1,0 +1,10 @@
+--- 
+Paths: 
+  - 
+    PathName: "Order Submitted"
+    PathDesc: "An order was successfully submitted."
+  - 
+    PathName: "User Logged In"
+    PathDesc: "A user managed to successfully log in."
+
+RepoURL: "https://github.com/martinroddam/test-gotip"
