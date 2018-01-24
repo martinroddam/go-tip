@@ -77,6 +77,7 @@ func applyLabelToPullRequest(prNumber string) {
 
 	var gitHubEditInfo GitHubEditInfo
 	gitHubEditInfo.labels[0] = label
+	gitHubEditInfo.labels = append(gitHubEditInfo.labels, label)
 	reqBody, jsonErr := json.Marshal(gitHubEditInfo)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
