@@ -167,6 +167,7 @@ func initMostRecentlyMergedPR(gitInfo GitInfo) {
 	// loop through all objects
 	for i := range data {
 		gitHubCommit := data[i].Commit
+		fmt.Println(data[i].Commit)
 		if len(r.FindStringSubmatch(gitHubCommit.Message)[1]) > 1 {
 			prNumber = r.FindStringSubmatch(gitHubCommit.Message)[1]
 			fmt.Printf("Found Pull Request Number: %s\n", prNumber)
