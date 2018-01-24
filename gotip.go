@@ -133,7 +133,7 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 
 func initMostRecentlyMergedPR(gitInfo GitInfo) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", gitInfo.Owner, gitInfo.Repo)
-
+	fmt.Println(url)
 	client := http.Client{
 		Timeout: time.Second * 2, // Maximum of 2 secs
 	}
@@ -154,6 +154,8 @@ func initMostRecentlyMergedPR(gitInfo GitInfo) {
 	if readErr != nil {
 		log.Fatal(readErr)
 	}
+
+	fmt.Println(body)
 
 	var data GitHubAPI
 	json.Unmarshal(body, &data)
