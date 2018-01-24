@@ -83,7 +83,7 @@ func applyLabelToPullRequest(prNumber string) {
 	//}
 	//fmt.Println("Applying label: \n" + string(reqBody[:]))
 	//req, err := http.NewRequest(http.MethodPatch, url, strings.NewReader(string(reqBody[:])))
-	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader("[\"" + label "\"]"))
+	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader("[\""+label+"\"]"))
 	if err != nil {
 		log.Fatal(err)
 	}
