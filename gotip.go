@@ -160,13 +160,14 @@ func initMostRecentlyMergedPR(gitInfo GitInfo) {
 
 	var data GitHubAPI
 	json.Unmarshal(body, &data)
-	fmt.Printf("Response: %v\n", data)
+	//fmt.Printf("Response: %v\n", data)
 
 	r := regexp.MustCompile(`Merge pull request #(?P<prNumber>\d+) .*`)
 	var prNumber string
 	// loop through all objects
 	for i := range data {
 		gitHubCommit := data[i].Commit
+		fmt.Println("COMMIT")
 		fmt.Println(data[i].Commit)
 		if len(r.FindStringSubmatch(gitHubCommit.Message)[1]) > 1 {
 			prNumber = r.FindStringSubmatch(gitHubCommit.Message)[1]
