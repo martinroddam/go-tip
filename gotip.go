@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -131,24 +132,32 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 }
 
 func initMostRecentlyMergedPR(gitInfo GitInfo) {
-	// get this from GitHub API - commit id? pr nummber?
-	// hard code for now
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", gitInfo.Owner, gitInfo.Repo)
-	res, err := http.Get(url)
 
-	if err != nil {
-		panic(err.Error())
+	client := http.Client{
+		Timeout: time.Second * 2, // Maximum of 2 secs
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
-
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		panic(err.Error())
+		log.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "token "+gitInfo.PersonalAccessToken)
+
+	res, getErr := client.Do(req)
+	if getErr != nil {
+		log.Fatal(getErr)
+	}
+
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		log.Fatal(readErr)
 	}
 
 	var data GitHubAPI
 	json.Unmarshal(body, &data)
-	fmt.Printf("Results: %v\n", data)
+	fmt.Printf("Response: %v\n", data)
 
 	prNumber := "1"
 	c.Set("current_pr", prNumber, cache.DefaultExpiration)
