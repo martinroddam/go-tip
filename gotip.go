@@ -1,12 +1,7 @@
 package gotip
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -40,7 +35,12 @@ func init() {
 // Verify a path in your application. Must match the PathName as defined in paths.yaml
 func Verify(pathName string) {
 
-	lastMergedPR := getMostRecentlyMergedPR()
+	lastMergedPR := getMostRecentlyMergedPullRequestFromCache()
+
+	if lastMergedPR == "" {
+		fmt.Printf("Pull request number not set. Cannot proceed with verification of path [%s].\n", pathName)
+		return
+	}
 
 	if !isValidPath(pathName) {
 		return
@@ -58,7 +58,7 @@ func Verify(pathName string) {
 
 	if areAllPathsVerifiedForPR(lastMergedPR) {
 		markPullRequestVerified(lastMergedPR)
-		go markGitHubPullRequestAsVerified(lastMergedPR)
+		go applyLabelToPullRequest(lastMergedPR)
 	}
 }
 
@@ -109,7 +109,6 @@ func isPullRequestAlreadyVerified(mostRecentPullRequestNumber string) bool {
 			fmt.Println("Pull request not yet verified.")
 			return false
 		}
-		layout := "2006-01-02T15:04:05.000Z"
 
 		_, err := time.Parse(layout, verifiedTimestamp.(string))
 
@@ -135,48 +134,12 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 }
 
 func initMostRecentlyMergedPR(gitInfo GitInfo) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", gitInfo.Owner, gitInfo.Repo)
-	fmt.Println(url)
-	client := http.Client{
-		Timeout: time.Second * 2, // Maximum of 2 secs
-	}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req.Header.Set("Authorization", "token "+gitInfo.PersonalAccessToken)
-
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
-	}
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
-	var data GitHubAPI
-	json.Unmarshal(body, &data)
-
-	r := regexp.MustCompile(`Merge pull request #(?P<prNumber>\d+) .*`)
-	var prNumber string
-
-	for i := range data {
-		gitHubCommit := data[i].Commit
-		if len(r.FindStringSubmatch(gitHubCommit.Message)) > 1 {
-			prNumber = r.FindStringSubmatch(gitHubCommit.Message)[1]
-			fmt.Printf("Found Pull Request Number: %s\n", prNumber)
-			c.Set("current_pr", prNumber, cache.DefaultExpiration)
-			break
-		}
-	}
+	prNumber := getMostRecentlyMergedPullRequest(gitInfo)
+	c.Set("current_pr", prNumber, cache.DefaultExpiration)
 	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
 }
 
-func getMostRecentlyMergedPR() string {
+func getMostRecentlyMergedPullRequestFromCache() string {
 	pr, found := c.Get("current_pr")
 	if found {
 		fmt.Printf("Current Pull Request ID: [%s]\n", pr.(string))
@@ -195,8 +158,4 @@ func markPullRequestVerified(prNumber string) {
 	timestamp := t.Format(layout)
 	c.Set("PR-"+prNumber, timestamp, cache.DefaultExpiration)
 	fmt.Printf("PR# [%s] marked verified at [%s]\n", prNumber, timestamp)
-}
-
-func markGitHubPullRequestAsVerified(prNumber string) {
-	fmt.Printf("Pull request # [%s] tagged as Verified in GitHub.", prNumber)
 }
