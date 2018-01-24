@@ -1,16 +1,24 @@
 package gotip
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/patrickmn/go-cache"
 )
 
-type Config struct {
-	RepoURL string `yaml:"RepoURL"`
-	Paths   []Path `yaml:"Paths"`
+type GitInfo struct {
+	Owner               string `yaml:"Owner"`
+	Repo                string `yaml:"Repo"`
+	PersonalAccessToken string `yaml:"PersonalAccessToken"`
+}
+
+type PathInfo struct {
+	Paths []Path `yaml:"Paths"`
 }
 
 type Path struct {
@@ -18,15 +26,13 @@ type Path struct {
 	PathDesc string `yaml:"PathDesc"`
 }
 
-// set up the go-cache defaults
 var c = cache.New(0, 0) // no expiry
-//const githubRoot = "api.github.com"
-//const gitOwner = "utilitywarehouse"
 const layout = "2006-01-02T15:04:05.000Z"
 
 func init() {
-	var config = getConfig()
-	initMostRecentlyMergedPR(config)
+	//var pathInfo = getPathInfo()
+	var gitInfo = getGitInfo()
+	go initMostRecentlyMergedPR(gitInfo)
 }
 
 // Verify a path in your application. Must match the PathName as defined in paths.yaml
@@ -68,7 +74,7 @@ func isValidPath(pathNameToValidate string) bool {
 }
 
 func getPathsToBeVerified() ([]Path, error) {
-	paths := getConfig().Paths
+	paths := getPathInfo().Paths
 	return paths, nil
 }
 
@@ -114,7 +120,7 @@ func isPullRequestAlreadyVerified(mostRecentPullRequestNumber string) bool {
 }
 
 func areAllPathsVerifiedForPR(prNumber string) bool {
-	pathsToBeVerified := getConfig().Paths
+	pathsToBeVerified := getPathInfo().Paths
 	for i := range pathsToBeVerified {
 		if !isPathVerfiedForThisPullRequest(pathsToBeVerified[i].PathName, prNumber) {
 			return false
@@ -124,9 +130,26 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 	return true
 }
 
-func initMostRecentlyMergedPR(config Config) {
+func initMostRecentlyMergedPR(gitInfo GitInfo) {
 	// get this from GitHub API - commit id? pr nummber?
 	// hard code for now
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", gitInfo.Owner, gitInfo.Repo)
+	res, err := http.Get(url)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var data GitHubAPI
+	json.Unmarshal(body, &data)
+	fmt.Printf("Results: %v\n", data)
+
 	prNumber := "1"
 	c.Set("current_pr", prNumber, cache.DefaultExpiration)
 	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
