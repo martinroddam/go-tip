@@ -22,7 +22,8 @@ type GitHubCommit struct {
 
 const label string = "Verified in PROD"
 
-func getMostRecentlyMergedPullRequest(gitInfo GitInfo) string {
+func getMostRecentlyMergedPullRequest() string {
+	var gitInfo = getGitInfo()
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", gitInfo.Owner, gitInfo.Repo)
 	fmt.Println(url)
 	client := http.Client{

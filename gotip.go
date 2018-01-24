@@ -1,11 +1,13 @@
 package gotip
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/patrickmn/go-cache"
+	"github.com/prometheus/common/log"
 )
 
 type GitInfo struct {
@@ -23,16 +25,14 @@ type Path struct {
 	PathDesc string `yaml:"PathDesc"`
 }
 
-var c = cache.New(0, 0) // no expiry
+var c = cache.New(0, 0) // go-cache no expiry
 const layout = "2006-01-02T15:04:05.000Z"
 
 func init() {
-	//var pathInfo = getPathInfo()
-	var gitInfo = getGitInfo()
-	go initMostRecentlyMergedPR(gitInfo)
+	go initMostRecentlyMergedPR()
 }
 
-// Verify a path in your application. Must match the PathName as defined in paths.yaml
+// Verify a critical path in your application. Must match a PathName as defined in paths.yaml
 func Verify(pathName string) {
 
 	lastMergedPR := getMostRecentlyMergedPullRequestFromCache()
@@ -66,26 +66,24 @@ func isValidPath(pathNameToValidate string) bool {
 	pathsToBeVerified, err := getPathsToBeVerified()
 	if err != nil {
 		fmt.Println(err)
+		return false
 	}
 	for i := range pathsToBeVerified {
 		if pathsToBeVerified[i].PathName == pathNameToValidate {
-			fmt.Printf("Path Name [%s] is valid.\n", pathNameToValidate)
 			return true
 		}
 	}
-	fmt.Printf("Path Name [%s] is invalid!\n", pathNameToValidate)
+	log.Info("Path Name [%s] is invalid!\n", pathNameToValidate)
+	//fmt.Printf("Path Name [%s] is invalid!\n", pathNameToValidate)
 	return false
 }
 
 func getPathsToBeVerified() ([]Path, error) {
 	paths := getPathInfo().Paths
+	if len(paths) < 1 {
+		return nil, errors.New("no paths specified")
+	}
 	return paths, nil
-}
-
-func getPathsAlreadyVerifiedForThisPullRequest(prNumber string) []string {
-	// using the list of paths to be verified, which ones have a gp-cache key with the value matching the PR ID
-	paths := []string{"one", "two"}
-	return paths
 }
 
 func isPathVerfiedForThisPullRequest(pathToBeVerified string, lastMergedPR string) bool {
@@ -133,8 +131,8 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 	return true
 }
 
-func initMostRecentlyMergedPR(gitInfo GitInfo) {
-	prNumber := getMostRecentlyMergedPullRequest(gitInfo)
+func initMostRecentlyMergedPR() {
+	prNumber := getMostRecentlyMergedPullRequest()
 	c.Set("current_pr", prNumber, cache.DefaultExpiration)
 	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
 }
