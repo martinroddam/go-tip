@@ -36,6 +36,6 @@ func getGitInfo() GitInfo {
 	if ymlErr != nil {
 		log.Fatalf("error: %v", ymlErr)
 	}
-
+	fmt.Println(gitInfo)
 	return gitInfo
 }
