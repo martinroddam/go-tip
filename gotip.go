@@ -161,20 +161,17 @@ func initMostRecentlyMergedPR(gitInfo GitInfo) {
 
 	r := regexp.MustCompile(`Merge pull request #(?P<prNumber>\d+) .*`)
 	var prNumber string
-	// loop through all objects
+
 	for i := range data {
 		gitHubCommit := data[i].Commit
 		if len(r.FindStringSubmatch(gitHubCommit.Message)) > 1 {
 			prNumber = r.FindStringSubmatch(gitHubCommit.Message)[1]
 			fmt.Printf("Found Pull Request Number: %s\n", prNumber)
 			c.Set("current_pr", prNumber, cache.DefaultExpiration)
+			break
 		}
 	}
-
-	//prNumber := "1"
-	//c.Set("current_pr", prNumber, cache.DefaultExpiration)
 	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
-	//fmt.Printf("Pull request number: [%s]\n", prNumber)
 }
 
 func getMostRecentlyMergedPR() string {
