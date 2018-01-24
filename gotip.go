@@ -42,7 +42,9 @@ func Verify(pathName string) {
 
 	lastMergedPR := getMostRecentlyMergedPR()
 
-	isValidPath(pathName)
+	if !isValidPath(pathName) {
+		return
+	}
 
 	if isPullRequestAlreadyVerified(lastMergedPR) {
 		return
