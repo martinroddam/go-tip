@@ -20,10 +20,6 @@ type GitHubCommit struct {
 	}
 }
 
-type GitHubEditInfo struct {
-	labels []string
-}
-
 const label string = "Verified in PROD"
 
 func getMostRecentlyMergedPullRequest(gitInfo GitInfo) string {
@@ -71,18 +67,8 @@ func applyLabelToPullRequest(prNumber string) {
 	var gitInfo = getGitInfo()
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%s/labels", gitInfo.Owner, gitInfo.Repo, prNumber)
 	fmt.Println(url)
-	client := http.Client{
-		Timeout: time.Second * 2, // Maximum of 2 secs
-	}
+	client := http.Client{}
 
-	//var gitHubEditInfo GitHubEditInfo
-	//gitHubEditInfo.labels = append(gitHubEditInfo.labels, label)
-	//reqBody, jsonErr := json.Marshal(gitHubEditInfo)
-	//if jsonErr != nil {
-	//	log.Fatal(jsonErr)
-	//}
-	//fmt.Println("Applying label: \n" + string(reqBody[:]))
-	//req, err := http.NewRequest(http.MethodPatch, url, strings.NewReader(string(reqBody[:])))
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader("[\""+label+"\"]"))
 	if err != nil {
 		log.Fatal(err)
