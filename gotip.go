@@ -155,7 +155,7 @@ func initMostRecentlyMergedPR(gitInfo GitInfo) {
 		log.Fatal(readErr)
 	}
 
-	fmt.Println(body)
+	fmt.Println(string(body[:]))
 
 	var data GitHubAPI
 	json.Unmarshal(body, &data)
