@@ -81,7 +81,7 @@ func applyLabelToPullRequest(prNumber string) {
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
-
+	fmt.Println("Applying label: \n" + string(reqBody[:]))
 	req, err := http.NewRequest(http.MethodPatch, url, strings.NewReader(string(reqBody[:])))
 	if err != nil {
 		log.Fatal(err)
