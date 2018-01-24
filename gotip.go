@@ -7,19 +7,17 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/prometheus/common/log"
 )
 
-type GitInfo struct {
-	Owner               string `yaml:"Owner"`
-	Repo                string `yaml:"Repo"`
-	PersonalAccessToken string `yaml:"PersonalAccessToken"`
-}
-
+// PathInfo contains the list of critical path (or journey) labels that
+// require completion for the pull request to be considered 'Verified'
 type PathInfo struct {
 	Paths []Path `yaml:"Paths"`
 }
 
+// Path represents a critical path (or journey) in the application.
+// It consists of a unique label (Path) and a description. The description
+// serves no purpose other than to provide context to the reader.
 type Path struct {
 	PathName string `yaml:"PathName"`
 	PathDesc string `yaml:"PathDesc"`
@@ -73,8 +71,7 @@ func isValidPath(pathNameToValidate string) bool {
 			return true
 		}
 	}
-	log.Info("Path Name [%s] is invalid!\n", pathNameToValidate)
-	//fmt.Printf("Path Name [%s] is invalid!\n", pathNameToValidate)
+	fmt.Printf("Path Name specified [%s] is not in the configured list\n", pathNameToValidate)
 	return false
 }
 
@@ -90,13 +87,10 @@ func isPathVerfiedForThisPullRequest(pathToBeVerified string, lastMergedPR strin
 	pr, found := c.Get(pathToBeVerified)
 	if found {
 		if strings.Compare(pr.(string), "PR-"+lastMergedPR) == 0 {
-			fmt.Printf("Path [%s] has been previously verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
 			return true
 		}
-		fmt.Printf("Path [%s] has not yet been verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
 		return false
 	}
-	fmt.Printf("Path [%s] has not yet been verified for PR# [%s]\n", pathToBeVerified, lastMergedPR)
 	return false
 }
 
@@ -104,7 +98,6 @@ func isPullRequestAlreadyVerified(mostRecentPullRequestNumber string) bool {
 	verifiedTimestamp, found := c.Get("PR-" + mostRecentPullRequestNumber)
 	if found {
 		if strings.Compare(verifiedTimestamp.(string), "") == 0 {
-			fmt.Println("Pull request not yet verified.")
 			return false
 		}
 
@@ -113,9 +106,7 @@ func isPullRequestAlreadyVerified(mostRecentPullRequestNumber string) bool {
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Printf("Pull request already verified at %s.\n", verifiedTimestamp.(string))
 		return true
-
 	}
 	return false
 }
@@ -127,7 +118,6 @@ func areAllPathsVerifiedForPR(prNumber string) bool {
 			return false
 		}
 	}
-	fmt.Printf("All paths verified for PR# [%s]\n", prNumber)
 	return true
 }
 
@@ -140,20 +130,22 @@ func initMostRecentlyMergedPR() {
 func getMostRecentlyMergedPullRequestFromCache() string {
 	pr, found := c.Get("current_pr")
 	if found {
-		fmt.Printf("Current Pull Request ID: [%s]\n", pr.(string))
 		return pr.(string)
 	}
-	return "" // if we can't find it, we should log out but not panic
+	return ""
 }
 
 func markPathVerified(pathName string, prNumber string) {
 	c.Set(pathName, "PR-"+prNumber, cache.DefaultExpiration)
-	fmt.Printf("Path [%s] marked verified for PR# [%s]\n", pathName, prNumber)
 }
 
 func markPullRequestVerified(prNumber string) {
 	t := time.Now()
 	timestamp := t.Format(layout)
 	c.Set("PR-"+prNumber, timestamp, cache.DefaultExpiration)
-	fmt.Printf("PR# [%s] marked verified at [%s]\n", prNumber, timestamp)
+}
+
+func unmarkPullRequestVerified(prNumber string) {
+	c.Set("PR-"+prNumber, "", cache.DefaultExpiration)
+	fmt.Printf("PR# [%s] verifation reset for PR# [%s]\n", prNumber)
 }
