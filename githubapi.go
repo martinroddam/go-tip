@@ -33,7 +33,7 @@ func getMostRecentlyMergedPullRequest() string {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", gitInfo.Owner, gitInfo.Repo)
 
 	client := http.Client{
-		Timeout: time.Second * 2, // Maximum of 2 secs
+		Timeout: time.Second * 5,
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
